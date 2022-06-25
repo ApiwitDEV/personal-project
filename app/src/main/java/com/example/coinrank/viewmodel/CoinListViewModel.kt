@@ -1,7 +1,5 @@
 package com.example.coinrank.viewmodel
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.coinrank.model.CoinData
 import java.text.DecimalFormat

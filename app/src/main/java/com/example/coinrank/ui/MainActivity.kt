@@ -24,7 +24,7 @@ import retrofit2.Response
 
 class MainActivity : AppCompatActivity() {
 
-    private val limit : Int = 10
+    private val limit : Int = 100
     private lateinit var binding:ActivityMainBinding
 
     private val loader = LoadData()
@@ -95,7 +95,6 @@ class MainActivity : AppCompatActivity() {
                 else {
                     Toast.makeText(baseContext,response.code().toString()
                             +" HTTP ERROR",Toast.LENGTH_SHORT).show()
-                    Thread.sleep(1000)
                     load()
                 }
             }

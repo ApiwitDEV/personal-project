@@ -1,8 +1,5 @@
 package com.example.coinrank.repositories
 
-import com.example.coinrank.R
-import com.example.coinrank.model.CoinData
-import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 

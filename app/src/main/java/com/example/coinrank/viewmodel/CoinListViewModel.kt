@@ -1,12 +1,16 @@
 package com.example.coinrank.viewmodel
 
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.example.coinrank.model.CoinData
+import com.example.coinrank.model.CoinsData.CoinsData
 import java.text.DecimalFormat
 
 class CoinListViewModel : ViewModel() {
 
     var offset : Int = 0
+    private var _search = MutableLiveData<String>("")
+    var search : LiveData<String> = _search
 
     var top3Icon = mutableListOf<String>()
     var top3name = mutableListOf<String>()
@@ -24,40 +28,71 @@ class CoinListViewModel : ViewModel() {
 
     var position : Int = 0
 
-    fun setItem(coins : CoinData , limit : Int) {
-        var initial : Int
-        if (offset == 0) {
-            initial = 3
-        }
-        else {
-            initial = 0
-        }
+    fun setItem(coins : CoinsData) {
 
         val format = DecimalFormat()
         format.applyPattern("#.###")
 
-        for (position in 0 until limit) {
-            val item = coins.data.coins[position]
-            var formatPrice : String = format.format(item.price)
-            if (position < initial) {
-                top3Icon.add( item.iconUrl )
-                top3name.add( item.name )
-                top3symbol.add( item.symbol )
-
-                top3price.add( "$"+formatPrice )
-                if (item.change >= 0) {
-                    top3colorOfChangeValue.add(true)
+        if (offset == 0 && search.value.toString() == "") {
+            setEmpty()
+            var counter = 0
+            for (item in coins.data.coins) {
+                val formatPrice : String = format.format(item.price)
+                if (counter < 3) {
+                    top3Icon.add( item.iconUrl )
+                    top3name.add( item.name )
+                    top3symbol.add( item.symbol )
+                    top3price.add("$"+formatPrice)
+                    top3change.add( item.change.toString() )
+                    if (item.change >= 0) {
+                        colorOfChangeValue.add(true)
+                    }
+                    else {
+                        colorOfChangeValue.add(false)
+                    }
+                    change.add( item.change.toString() )
                 }
                 else {
-                    top3colorOfChangeValue.add(false)
+                    iconUrl.add( item.iconUrl )
+                    name.add( item.name )
+                    symbol.add( item.symbol )
+                    price.add( "$"+formatPrice )
+
+                    if (item.change >= 0) {
+                        colorOfChangeValue.add(true)
+                    }
+                    else {
+                        colorOfChangeValue.add(false)
+                    }
+                    change.add( item.change.toString() )
                 }
-                top3change.add( item.change.toString() )
+                counter += 1
             }
-            else {
+        }
+        else if (search.value.toString() != "") {
+            setEmpty()
+            for (item in coins.data.coins) {
+                val formatPrice : String = format.format(item.price)
                 iconUrl.add( item.iconUrl )
                 name.add( item.name )
                 symbol.add( item.symbol )
+                price.add( "$"+formatPrice )
 
+                if (item.change >= 0) {
+                    colorOfChangeValue.add(true)
+                }
+                else {
+                    colorOfChangeValue.add(false)
+                }
+                change.add( item.change.toString() )
+            }
+        }
+        else {
+            for (item in coins.data.coins) {
+                val formatPrice : String = format.format(item.price)
+                iconUrl.add( item.iconUrl )
+                name.add( item.name )
+                symbol.add( item.symbol )
                 price.add( "$"+formatPrice )
 
                 if (item.change >= 0) {
@@ -70,10 +105,25 @@ class CoinListViewModel : ViewModel() {
             }
         }
     }
+
+    fun setEmpty() {
+        iconUrl = mutableListOf()
+        name = mutableListOf()
+        symbol = mutableListOf()
+        price = mutableListOf()
+        change = mutableListOf()
+        colorOfChangeValue = mutableListOf()
+    }
+
     fun addEndPosition() {
         name.add( "" )
     }
+
     fun removeEndPosition() {
         name.remove("")
+    }
+
+    fun setSearch(text : String) {
+        _search.value = text
     }
 }

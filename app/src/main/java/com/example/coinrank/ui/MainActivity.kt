@@ -4,6 +4,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.widget.ImageView
+import android.widget.SearchView.OnQueryTextListener
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
@@ -12,7 +13,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.coinrank.R
 import com.example.coinrank.databinding.ActivityMainBinding
-import com.example.coinrank.model.CoinData
+import com.example.coinrank.model.CoinsData.CoinsData
 import com.example.coinrank.repositories.LoadData
 import com.example.coinrank.viewmodel.CoinListViewModel
 import com.github.twocoffeesoneteam.glidetovectoryou.GlideToVectorYou
@@ -23,7 +24,7 @@ import retrofit2.Response
 
 class MainActivity : AppCompatActivity() {
 
-    private val limit : Int = 25
+    private val limit : Int = 10
     private lateinit var binding:ActivityMainBinding
 
     private val loader = LoadData()
@@ -49,25 +50,40 @@ class MainActivity : AppCompatActivity() {
                 val layoutManager: LinearLayoutManager =
                     recyclerView.layoutManager as LinearLayoutManager
                 if (layoutManager.findLastCompletelyVisibleItemPosition() == viewModel.name.size - 1
-                    && viewModel.name[viewModel.name.size - 1] != "") {
+                    && viewModel.name.last() != ""
+                    && viewModel.search.value.toString() == "") {
                     viewModel.addEndPosition()
                     viewModel.offset += limit
                     load()
                 }
             }
         })
+
+        binding.search.setOnQueryTextListener(object : OnQueryTextListener{
+            override fun onQueryTextSubmit(p0: String?): Boolean {
+                return false
+            }
+
+            override fun onQueryTextChange(p0: String?): Boolean {
+                viewModel.offset = 0
+                viewModel.setSearch(p0.toString())
+                load()
+                return false
+            }
+        })
     }
 
     fun load() {
-        val res = loader.service.getCoins( R.string.apiKey.toString() , viewModel.offset , limit )
-        res.enqueue(object : Callback<CoinData> {
-            override fun onResponse(call: Call<CoinData>, response: Response<CoinData>) {
-                val coins : CoinData
-                if (response.body() != null) {
+        val res = loader.service.getCoins( R.string.apiKey.toString() , viewModel.offset
+            , limit , viewModel.search.value.toString() )
+        res.enqueue(object : Callback<CoinsData> {
+            override fun onResponse(call: Call<CoinsData>, response: Response<CoinsData>) {
+                val coins : CoinsData
+                if (response.isSuccessful) {
                     coins = response.body()!!
                     viewModel.removeEndPosition()
-                    viewModel.setItem(coins, limit)
-                    if(viewModel.offset == 0) {
+                    viewModel.setItem(coins)
+                    if(viewModel.offset == 0 && viewModel.search.value.toString() == "") {
                         binding.viewModel = viewModel
                         setTopThreeCoinIcon(binding.icon1 , viewModel.top3Icon[0])
                         setTopThreeCoinIcon(binding.icon2 , viewModel.top3Icon[1])
@@ -76,10 +92,15 @@ class MainActivity : AppCompatActivity() {
                     }
                     (binding.adapter as CoinListAdapter).notifyDataSetChanged()
                 }
-                else load()
+                else {
+                    Toast.makeText(baseContext,response.code().toString()
+                            +" HTTP ERROR",Toast.LENGTH_SHORT).show()
+                    Thread.sleep(1000)
+                    load()
+                }
             }
 
-            override fun onFailure(call: Call<CoinData>, t: Throwable) {
+            override fun onFailure(call: Call<CoinsData>, t: Throwable) {
                 Toast.makeText(baseContext,"Fail Loading",Toast.LENGTH_LONG).show()
             }
         })
